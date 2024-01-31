@@ -207,7 +207,7 @@
       middle: 'yellow',
       ring: 'green',
       pinky: 'pink',
-      wrist: 'white'
+      wrist: 'black'
     }
 
     const gestureStrings = {
@@ -261,7 +261,24 @@
           flipHorizontal: true
         })
 
-        debugger
+        for(const hand of hands){
+          for(const keypoint of hand.keypoints){
+            const name = keypoint.name.split('_')[0].toString().toLowerCase();
+            const color = landmarkColors[name];
+            drawPoint(ctx, keypoint.x, keypoint.y, 3, color);
+          }
+
+          const est = GE.estimate(hand.keypoints3D, 9);
+          if(est.gestures.length > 0){
+            let result = est.gestures.reduce((p, c) => {
+              return (p.score > c.score) ? p : c;
+            });
+
+            const chosenHand = hand.handedness.toLowerCase();
+            resultLayer[chosenHand].innerText = gestureStrings[result.name];
+            updateDebugInfo(est.poseDate, chosenHand);
+          }
+        }
         // ...and so on
         setTimeout(() => { estimateHands() }, 1000 / config.video.fps)
       }
@@ -296,7 +313,10 @@
     }
 
     function drawPoint(ctx, x, y, r, color) {
-      debugger
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0,2 * Math.PI);
+      ctx.fillStyle = color;
+      ctx.fill();
     }
 
     function updateDebugInfo(data, hand) {
